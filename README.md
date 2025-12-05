@@ -7,6 +7,9 @@
 A lightweight image perspective correction library powered by OpenCV.js that automatically detects vertical lines and corrects perspective distortion.
 
 ---
+![截屏2025-12-06 00 19 02](https://github.com/user-attachments/assets/3f7abdd7-6930-4224-8fe7-c7c45f0f1ff1)
+
+---
 
 ## 📦 安装 | Installation
 
