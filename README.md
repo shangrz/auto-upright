@@ -8,12 +8,18 @@ OpenCV.js (https://docs.opencv.org/4.x/opencv.js)
  
 ##example
 import { autoUpright, loadOpenCV } from './auto-upright.js';
+
 1. 先加载 OpenCV (只需一次)
+
   await loadOpenCV();
 
-2. 处理图片
+3. 处理图片
   const result = await autoUpright(imageFile, {
+
     mode: 'auto',      // 'auto' | 'vertical' | 'full'
+   
     autoCrop: true,    // 自动裁切黑边
+   
     outputFormat: 'blob'  // 'blob' | 'dataUrl' | 'canvas'
+   
   });
