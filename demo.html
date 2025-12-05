@@ -1,1 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Upright - 自动透视矫正 | Perspective Correction</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #f0f0f0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ccc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .option input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #667eea;
+    }
+
+    .status {
+      text-align: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .status .label {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .status .text {
+      font-size: 1rem;
+    }
+
+    .status.loading .text {
+      color: #ffc107;
+    }
+
+    .status.success .text {
+      color: #4caf50;
+    }
+
+    .status.error .text {
+      color: #f44336;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .image-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .image-box .title {
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: #aaa;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .image-box .size {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .image-box .content {
+      position: relative;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+    }
+
+    .image-box img {
+      max-width: 100%;
+      max-height: 60vh;
+      display: block;
+    }
+
+    .placeholder {
+      color: #555;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .drop-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .drop-zone .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone .text {
+      color: #888;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+      }
+
+      .option {
+        padding: 8px 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Auto Upright</h1>
+      <p class="subtitle">自动透视矫正 · 智能去黑边 | Perspective Correction · Smart Crop</p>
+    </header>
+
+    <!-- Drop Zone | 拖拽上传区 -->
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📷</div>
+      <div class="text">
+        拖拽图片到这里，或点击上传<br>
+        <small>Drop image here, or click to upload</small>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" class="hidden">
+
+    <!-- Controls | 控制按钮 -->
+    <div class="controls">
+      <button class="btn btn-primary" id="btnUpload">📁 选择图片 Select</button>
+      <button class="btn btn-secondary" id="btnProcess" disabled>⚡ 开始矫正 Process</button>
+      <button class="btn btn-secondary" id="btnDownload" disabled>💾 下载 Download</button>
+    </div>
+
+    <!-- Options | 选项 -->
+    <div class="options">
+      <label class="option">
+        <input type="checkbox" id="autoCropCheck" checked>
+        智能裁切 Auto Crop
+      </label>
+    </div>
+
+    <!-- Status | 状态 -->
+    <div class="status" id="status">
+      <div class="label">Status | 状态</div>
+      <div class="text" id="statusText">Loading OpenCV.js... | 正在加载 OpenCV.js...</div>
+    </div>
+
+    <!-- Gallery | 图片展示 -->
+    <div class="gallery">
+      <div class="image-box">
+        <div class="title">
+          <span>Original | 原图</span>
+          <span class="size" id="origSize"></span>
+        </div>
+        <div class="content">
+          <img id="origImg" class="hidden">
+          <div class="placeholder" id="origPlaceholder">
+            Upload to preview<br>上传图片后显示
+          </div>
+        </div>
+      </div>
+      <div class="image-box">
+        <div class="title">
+          <span>Result | 矫正后</span>
+          <span class="size" id="outSize"></span>
+        </div>
+        <div class="content">
+          <img id="outImg" class="hidden">
+          <div class="placeholder" id="outPlaceholder">
+            Process to see result<br>处理后显示
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OpenCV.js -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+  <script type="module">
+    import { autoUpright } from './auto-upright-x2.js';
+
+    const $ = id => document.getElementById(id);
+    let cvReady = false;
+    let currentFile = null;
+    let resultDataUrl = null;
+
+    function setStatus(text, type = '') {
+      $('status').className = 'status ' + type;
+      $('statusText').textContent = text;
+    }
+
+    // Wait for OpenCV | 等待 OpenCV 加载
+    function waitForOpenCV() {
+      return new Promise(resolve => {
+        const check = () => {
+          if (window.cv && window.cv.Mat) { cvReady = true; resolve(); }
+          else setTimeout(check, 100);
+        };
+        check();
+      });
+    }
+
+    waitForOpenCV().then(() => {
+      setStatus('Ready! Upload an image | OpenCV 就绪，请上传图片', 'success');
+    });
+
+    // Drag & Drop | 拖拽上传
+    const dropZone = $('dropZone');
+    dropZone.addEventListener('click', () => $('fileInput').click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    $('fileInput').addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+    $('btnUpload').addEventListener('click', () => $('fileInput').click());
+    $('btnProcess').addEventListener('click', processImage);
+    $('btnDownload').addEventListener('click', downloadResult);
+
+    function handleFile(file) {
+      currentFile = file;
+      const url = URL.createObjectURL(file);
+      const img = $('origImg');
+      img.onload = () => {
+        $('origPlaceholder').classList.add('hidden');
+        img.classList.remove('hidden');
+        $('origSize').textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+        $('btnProcess').disabled = !cvReady;
+        // Clear previous result | 清空之前的结果
+        $('outImg').classList.add('hidden');
+        $('outPlaceholder').classList.remove('hidden');
+        $('outSize').textContent = '';
+        $('btnDownload').disabled = true;
+        resultDataUrl = null;
+        setStatus('Image loaded. Click Process | 图片已加载，点击"开始矫正"', 'success');
+      };
+      img.src = url;
+    }
+
+    async function processImage() {
+      if (!cvReady || !currentFile) return;
+
+      setStatus('Processing... | 正在处理...', 'loading');
+      $('btnProcess').disabled = true;
+
+      try {
+        const autoCropEnabled = $('autoCropCheck').checked;
+
+        // Convert file to dataURL | 将文件转为 dataURL
+        const dataUrl = await fileToDataUrl(currentFile);
+
+        const result = await autoUpright(dataUrl, {
+          autoCrop: autoCropEnabled
+        });
+
+        if (result.success) {
+          resultDataUrl = result.image;
+          showResult(resultDataUrl);
+          setStatus('Done! | 处理完成', 'success');
+        } else {
+          setStatus('Failed | 处理失败: ' + (result.error || 'Unknown error'), 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus('Error | 错误: ' + err.message, 'error');
+      }
+
+      $('btnProcess').disabled = false;
+    }
+
+    function showResult(dataUrl) {
+      const img = $('outImg');
+      img.onload = () => {
+        $('outPlaceholder').classList.add('hidden');
+        img.classList.remove('hidden');
+        $('outSize').textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+        $('btnDownload').disabled = false;
+      };
+      img.src = dataUrl;
+    }
+
+    function downloadResult() {
+      if (!resultDataUrl) return;
+      const a = document.createElement('a');
+      a.href = resultDataUrl;
+      a.download = 'upright_' + (currentFile?.name?.replace(/\.[^.]+$/, '.jpg') || 'image.jpg');
+      a.click();
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+
+</html>
